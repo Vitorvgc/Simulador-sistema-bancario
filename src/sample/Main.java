@@ -9,11 +9,19 @@ import javafx.stage.Stage;
 public class Main extends Application {
 
     @Override
-    public void start(Stage primaryStage) throws Exception{
+    public void start(Stage primaryStage) throws Exception {
         Parent root = FXMLLoader.load(getClass().getResource("scene.fxml"));
         primaryStage.setTitle("Sistema bancario");
         primaryStage.setScene(new Scene(root, 1024, 640));
         primaryStage.show();
+
+        //SystemManager manager = SystemManager.getInstance();
+
+        //manager.novoCliente(10);
+        //manager.novoCliente(30);
+        //manager.novoCliente(28);
+
+
     }
 
 
