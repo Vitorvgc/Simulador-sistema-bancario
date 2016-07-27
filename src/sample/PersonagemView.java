@@ -5,6 +5,7 @@ import com.sun.javafx.geom.Vec2d;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.geometry.Bounds;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -40,22 +41,22 @@ public class PersonagemView extends VBox {
         loop.playFromStart();
     }
 
-    public boolean desenha() {
+    public boolean desenha(Vec2d position) {
         this.setWidth(150);
         this.setHeight(150);
         this.sprite.setFitWidth(100);
         this.sprite.setFitHeight(100);
         AnchorPane pane = this.controller.cenario;
-        System.out.println(pane);
-        this.setTranslateX(200);//pane.getWidth() - this.sprite.getFitWidth());
-        this.setTranslateY(200);//pane.getHeight() - 2 * this.sprite.getFitHeight());
+        this.setTranslateX(position.x);//pane.getWidth() - this.sprite.getFitWidth());
+        this.setTranslateY(position.y);//pane.getHeight() - 2 * this.sprite.getFitHeight());
         pane.getChildren().add(this);
         return true;
     }
 
     public Vec2d getPos() {
 
-        Vec2d pos = this.getPos();
+        Bounds bounds = this.localToScene(this.getBoundsInLocal());
+        Vec2d pos = new Vec2d(bounds.getWidth(), bounds.getHeight());
         pos.x += this.getWidth();
         pos.y += this.getHeight() * 1.1;
         return pos;

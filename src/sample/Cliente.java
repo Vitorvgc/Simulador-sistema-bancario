@@ -1,8 +1,6 @@
 package sample;
 
-import com.sun.javafx.geom.Vec2d;
 import javafx.scene.image.Image;
-import javafx.util.Duration;
 
 import java.util.concurrent.Semaphore;
 
@@ -11,10 +9,10 @@ import java.util.concurrent.Semaphore;
  */
 public class Cliente extends Thread {
 
-    int id;
-    int tempoAtendimento;
-    int senha;
-    PersonagemView view;
+    private int id;
+    private int tempoAtendimento;
+    private int senha;
+    private PersonagemView view;
 
     Semaphore clientes;
     Semaphore caixas;
@@ -60,8 +58,19 @@ public class Cliente extends Thread {
     }
 
     private void moverPara(Caixa caixa) {
-
         System.out.println("Cliente " + this.id + " indo para caixa " + caixa.getCaixaId());
+    }
+
+    public PersonagemView getView() {
+        return this.view;
+    }
+
+    public int getTempoAtendimento() {
+        return this.tempoAtendimento;
+    }
+
+    public int getIdentificador() {
+        return this.id;
     }
 
 }

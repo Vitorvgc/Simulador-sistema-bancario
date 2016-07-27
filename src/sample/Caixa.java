@@ -34,23 +34,19 @@ public class Caixa extends Thread {
         while(true) {
             try {
                 ativo.acquire();
-                //clientes.acquire();
-                //disponivel = false;
                 atender(atendido);
-                //SystemManager.getInstance().atualizaSenha();
                 disponivel = true;
                 caixas.release();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
-        //System.out.println("Caixa " + this.id + " morreu");
     }
 
     private void atender(Cliente cliente) {
-        System.out.println("Caixa " + this.id + " atendendo cliente " + cliente.id);
+        System.out.println("Caixa " + this.id + " atendendo cliente " + cliente.getIdentificador());
         try {
-            sleep(cliente.tempoAtendimento * 1000);
+            sleep(cliente.getTempoAtendimento() * 1000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

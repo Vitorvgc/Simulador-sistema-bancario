@@ -1,6 +1,7 @@
 
 package sample;
 
+import com.sun.javafx.geom.Vec2d;
 import javafx.application.Platform;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
@@ -29,19 +30,20 @@ public class SystemManager {
     private static SystemManager instance = null;
 
     // inicializa a instância quando recriada
-    private SystemManager(int numeroCaixas) {
+    private SystemManager(int numeroCaixas, Controller controller) {
         this.senhaAtual = 0;
         this.numeroSenhas = 0;
         this.clienteId = 0;
         this.numeroCaixas = numeroCaixas;
+        this.controller = controller;
         this.clientesS = new Semaphore(0);
         this.caixasS = new Semaphore(numeroCaixas);
         this.clientes = new ArrayList<>();
         this.caixas = new ArrayList<>();
         for(int i = 0; i < numeroCaixas; i++) {
-            Caixa caixa = new Caixa(i + 1, clientesS, caixasS, controller,  new Image("/imagens/noam-chomsky.jpg"));
-            caixa.getView().desenha();
-
+            Caixa caixa = new Caixa(i + 1, clientesS, caixasS, controller, new Image("/imagens/noam-chomsky.jpg"));
+            caixa.getView().desenha(new Vec2d((i+1) * this.controller.cenario.getWidth() / 5 * this.numeroCaixas , 150));
+            caixas.add(caixa);
         }
         caixas.forEach(Caixa::start);
     }
@@ -52,15 +54,15 @@ public class SystemManager {
     }
 
     // reseta a instância para uma nova com o número de caixas passado por parâmetro
-    public static void novoSistema(int numeroCaixas) {
-        SystemManager.instance = new SystemManager(numeroCaixas);
+    public static void novoSistema(int numeroCaixas, Controller controller) {
+        SystemManager.instance = new SystemManager(numeroCaixas, controller);
     }
 
     // instancia um novo cliente com o tempo de atendimento determinado em segundos
     public void novoCliente(int tempoAtendimento) {
         Cliente cliente = new Cliente(++clienteId, tempoAtendimento, ++numeroSenhas, clientesS, caixasS, controller, new Image("/imagens/mikufront.png"));
         clientes.add(cliente);
-        cliente.view.desenha();
+        cliente.getView().desenha(controller.getEntradaPos());
         cliente.start();
     }
 
@@ -78,6 +80,7 @@ public class SystemManager {
     }
 
     // retorna o cliente que possui a senha atual, ou nulo caso não haja cliente (usado pelo Caixa)
+    /*
     public Cliente getProximoCliente() {
 
         for(int i = 0; i < clientes.size(); i++)
@@ -85,7 +88,7 @@ public class SystemManager {
                 return clientes.get(i);
         return null;
     }
-
+    */
     // remove um cliente do array de clientes
     public void removerCliente(Cliente cliente) {
         clientes.remove(cliente);
