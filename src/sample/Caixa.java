@@ -25,7 +25,7 @@ public class Caixa extends Thread {
         this.clientes = clientes;
         this.caixas = caixas;
         this.ativo = new Semaphore(0);
-        this.view = new PersonagemView(0, this.id, controller, sprite);
+        this.view = new PersonagemView(0, this.id, controller, sprite, TipoEnum.CAIXA, 0);
     }
 
     @Override

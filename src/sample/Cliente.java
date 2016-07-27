@@ -17,11 +17,11 @@ public class Cliente extends Thread {
     Semaphore clientes;
     Semaphore caixas;
 
-    public Cliente(int id, int tempoAtendimento, int senha, Semaphore clientes, Semaphore caixas, Controller controller, Image sprite) {
+    public Cliente(int id, int tempoAtendimento, int senha, Semaphore clientes, Semaphore caixas, Controller controller, Image sprite, int personagemId) {
         this.id = id;
         this.tempoAtendimento = tempoAtendimento;
         this.senha = senha;
-        this.view = new PersonagemView(senha, id, controller, sprite);
+        this.view = new PersonagemView(senha, id, controller, sprite, TipoEnum.CLIENTE, personagemId);
         this.clientes = clientes;
         this.caixas = caixas;
     }
@@ -39,7 +39,7 @@ public class Cliente extends Thread {
             this.view.moverPara(caixa);
             SystemManager.getInstance().ativaCaixa(caixa);
             serAtendido();
-
+            this.getView().sair();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

@@ -39,7 +39,6 @@ public class Controller {
 
     @FXML
     private void novoCliente() {
-        //senhaLabel.setText(new Date().toInstant().toString());
         SystemManager.getInstance().novoCliente(10);
     }
 

@@ -14,16 +14,7 @@ public class Main extends Application {
         primaryStage.setTitle("Sistema bancario");
         primaryStage.setScene(new Scene(root, 1024, 640));
         primaryStage.show();
-
-        //SystemManager manager = SystemManager.getInstance();
-
-        //manager.novoCliente(10);
-        //manager.novoCliente(30);
-        //manager.novoCliente(28);
-
-
     }
-
 
     public static void main(String[] args) {
         launch(args);
