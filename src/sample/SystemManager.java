@@ -1,28 +1,27 @@
-
 package sample;
 
 import com.sun.javafx.geom.Vec2d;
-import javafx.scene.image.Image;
 
 import java.util.concurrent.Semaphore;
 import java.util.ArrayList;
 
-/**
- * Created by Vítor on 22/07/2016.
- */
+/** Singleton responsável por instanciar, eliminar e gerenciar os estados dos caixas e clientes **/
 public class SystemManager {
+
+    final int NUMERO_CADEIRAS = 10; // número máximo de cadeiras
 
     private int numeroSenhas;
     private int senhaAtual;
     private int clienteId;
-    private int numeroCaixas;
     private ArrayList<Caixa> caixas;
     private ArrayList<Cliente> clientes;
+    private ArrayList<Cliente> clientesEsperando;
+    private Cadeira cadeiras[];
+    private int numeroCaixasDormindo;
 
     private Controller controller;
 
-    private Semaphore clientesS;
-    private Semaphore caixasS;
+    private Semaphore[] clienteSemaphores;
 
     private static SystemManager instance = null;
 
@@ -31,23 +30,28 @@ public class SystemManager {
         this.senhaAtual = 0;
         this.numeroSenhas = 0;
         this.clienteId = 0;
-        this.numeroCaixas = numeroCaixas;
+        this.numeroCaixasDormindo = numeroCaixas;
         this.controller = controller;
-        this.clientesS = new Semaphore(0);
-        this.caixasS = new Semaphore(numeroCaixas);
+        Semaphore caixasS = new Semaphore(numeroCaixas);
+        Semaphore mutexCaixasDormindo = new Semaphore(numeroCaixas);
+        this.clienteSemaphores = new Semaphore[]{caixasS, new Semaphore(1), new Semaphore(1), new Semaphore(NUMERO_CADEIRAS)};
         this.clientes = new ArrayList<>();
+        this.clientesEsperando = new ArrayList<>();
+        // inicializa e coloca os caixas no cenário
         this.caixas = new ArrayList<>();
-        Double razao = this.controller.cenario.getWidth() / (this.numeroCaixas + 1);
+        Double razao = this.controller.cenario.getWidth() / (numeroCaixas + 1);
         for(int i = 0; i < numeroCaixas; i++) {
-            Caixa caixa = new Caixa(i + 1, clientesS, caixasS, controller, new Image("/imagens/noam-chomsky.jpg"));
-            //System.out.println(caixa.getView().getWidth()); => printando 0.0
-            Double xPos = (i+1) * razao - 50; // hardcodado
-            caixa.getView().desenha(new Vec2d(xPos, 150));
-            System.out.println(xPos.toString() + " 150");
-            System.out.println(caixa.getView().getPos().toString());
+            Caixa caixa = new Caixa(i + 1, caixasS, mutexCaixasDormindo,controller);
+            Double xPos = (i+1) * razao - 50;
+            caixa.getView().desenha(new Vec2d(xPos, 100), 100, 100);
             caixas.add(caixa);
         }
+        // ativa todos os caixas
         caixas.forEach(Caixa::start);
+        // instanciação das cadeiras
+        this.cadeiras = new Cadeira[10];
+        for(int i = 0, xPos = 63; i < 10; i++, xPos += 74)
+            cadeiras[i] = new Cadeira(new Vec2d(xPos, 410));
     }
 
     // retorna a instância compartilhada pelo Singleton
@@ -62,28 +66,40 @@ public class SystemManager {
 
     // instancia um novo cliente com o tempo de atendimento determinado em segundos
     public void novoCliente(int tempoAtendimento) {
-        Cliente cliente = new Cliente(++clienteId, tempoAtendimento, ++numeroSenhas, clientesS, caixasS, controller, new Image("/imagens/mikufront.png"), (numeroSenhas-1)%10);
+        Cliente cliente = new Cliente(++clienteId, tempoAtendimento, ++numeroSenhas, clienteSemaphores, controller, (numeroSenhas-1)%9);
         clientes.add(cliente);
-        cliente.getView().desenha(controller.getEntradaPos());
+        cliente.getView().desenha(controller.getEntradaPos(), 50, 50);
         cliente.start();
     }
 
-    // acorda um caixa específico (usado pelo Cliente)
+    // acorda um caixa específico
     public void ativaCaixa(Caixa caixa) {
         caixas.get(caixa.getCaixaId() - 1).ativo.release();
     }
 
-    // retorna o primeiro caixa disponível dentre todos os caixas do array, ou nulo caso não haja nenhum (usado pelo Cliente)
+    // retorna o primeiro caixa disponível dentre todos os caixas do array, ou nulo caso não haja nenhum
     public Caixa getCaixaDisponivel() {
-        for(int i = 0; i < caixas.size(); i++)
-            if(caixas.get(i).getDisponivel())
-                return caixas.get(i);
+        for (Caixa caixa : caixas)
+            if (caixa.getDisponivel())
+                return caixa;
         return null;
     }
 
-    // remove um cliente do array de clientes
-    public void removerCliente(Cliente cliente) {
-        clientes.remove(cliente);
+    // retorna a primeira cadeira desocupada dentre todas as cadeiras do array, ou nulo caso não haja nenhuma
+    public Cadeira getCadeiraDesocupada() {
+        for (Cadeira cadeira : cadeiras)
+            if (!(cadeira.getOcupada()))
+                return cadeira;
+        return null;
+    }
+
+    // indica que a cadeira passada por parâmetro está desocupada
+    public void desocupaCadeira(Cadeira cadeiraOcupada) {
+        for (Cadeira cadeira : cadeiras)
+            if (cadeira == cadeiraOcupada) {
+                cadeira.setOcupada(false);
+                return;
+            }
     }
 
     // atualiza a senha atual
@@ -92,12 +108,39 @@ public class SystemManager {
         controller.atualizaSenhaLabel(senhaAtual);
     }
 
+    // caso haja algum cliente esperando, atualiza a senha e acorda o cliente com a senha atual
+    public void chamarProximoCliente() {
+        if(clientesEsperando.size() > 0) {
+            atualizaSenha();
+            for (Cliente cliente : clientesEsperando)
+                if (cliente.getSenha() == senhaAtual) {
+                    cliente.getEsperando().release();
+                    return;
+                }
+        }
+    }
+
     public int getSenhaAtual() {
         return this.senhaAtual;
     }
 
-    public void setController(Controller controller) {
-        this.controller = controller;
+    public ArrayList<Cliente> getClientes() {
+        return clientes;
+    }
+
+    public void setClienteEsperando(Cliente cliente, Boolean esperando) {
+        if(esperando)
+            this.clientesEsperando.add(cliente);
+        else
+            this.clientesEsperando.remove(cliente);
+    }
+
+    public void setNumeroCaixasDormindo(int numeroCaixasDormindo) {
+        this.numeroCaixasDormindo = numeroCaixasDormindo;
+    }
+
+    public int getNumeroCaixasDormindo() {
+        return numeroCaixasDormindo;
     }
 
 }
